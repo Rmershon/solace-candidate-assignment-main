@@ -1,10 +1,55 @@
 import { Advocate } from "@/app/types/advocates";
 import HighlightedText from "../HighlightedText";
+import { memo } from "react";
 
 interface AdvocateCardProps {
-    advocate: Advocate;
-    searchTerm: string;
+  advocate: Advocate;
+  searchTerm: string;
 }
+
+interface SpecialtyPillProps {
+  specialty: string;
+  color: 'teal' | 'gray';
+  searchTerm: string;
+  truncate?: boolean;
+}
+
+const SpecialtyPill = ({ specialty, color, searchTerm, truncate = false }: SpecialtyPillProps) => {
+  const colorClass = color === 'teal' ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-600';
+
+  return (
+    <span
+      className={`inline-flex items-center px-3 py-1.5 text-xs text-center font-medium rounded-full max-w-full ${colorClass}`}
+      title={specialty}
+    >
+      <span className={`${truncate ? 'truncate max-w-[120px]' : ''}`}>
+        <HighlightedText text={specialty} searchTerm={searchTerm} />
+      </span>
+    </span>
+  );
+};
+
+const LocationInfo = memo(({ advocate, searchTerm }: { advocate: Advocate, searchTerm: string }) => {
+  return (
+    <div className="lg:col-span-1">
+      <div className="space-y-2">
+        <div className="flex items-center text-sm text-gray-600">
+          <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <HighlightedText text={advocate.city} searchTerm={searchTerm} />
+        </div>
+        <div className="flex items-center text-sm text-gray-600">
+          <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {advocate.yearsOfExperience} years of experience
+        </div>
+      </div>
+    </div>
+  )
+});
 
 export default function AdvocateCard({ advocate, searchTerm }: AdvocateCardProps) {
         
@@ -14,8 +59,8 @@ export default function AdvocateCard({ advocate, searchTerm }: AdvocateCardProps
           {/* Basic Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center mb-2">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-blue-600 font-semibold text-lg">
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                <span className="text-teal-700 font-semibold text-lg">
                   {advocate.firstName.charAt(0)}{advocate.lastName.charAt(0)}
                 </span>
               </div>
@@ -31,38 +76,17 @@ export default function AdvocateCard({ advocate, searchTerm }: AdvocateCardProps
           </div>
   
           {/* Location & Experience */}
-          <div className="lg:col-span-1">
-            <div className="space-y-2">
-              <div className="flex items-center text-sm text-gray-600">
-                <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <HighlightedText text={advocate.city} searchTerm={searchTerm} />
-              </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {advocate.yearsOfExperience} years of experience
-              </div>
-            </div>
-          </div>
+          <LocationInfo advocate={advocate} searchTerm={searchTerm} />
   
           {/* Specialties */}
           <div className="lg:col-span-1">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Specialties</h4>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-2">
               {advocate.specialties.slice(0, 3).map((specialty, index) => (
-                <span 
-                  key={index}
-                  className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-                >
-                  <HighlightedText text={specialty} searchTerm={searchTerm} />
-                </span>
+                <SpecialtyPill key={index} specialty={specialty} color="teal" searchTerm={searchTerm} truncate={true} />
               ))}
               {advocate.specialties.length > 3 && (
-                <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
                   +{advocate.specialties.length - 3} more
                 </span>
               )}
@@ -78,7 +102,10 @@ export default function AdvocateCard({ advocate, searchTerm }: AdvocateCardProps
                 </svg>
                 {advocate.phoneNumber.toString()}
               </div>
-              <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium">
+              <button 
+                className="w-full text-white py-2 px-4 rounded-md hover:opacity-90 transition-all duration-200 text-sm font-medium"
+                style={{backgroundColor: '#347866'}}
+              >
                 Contact Advocate
               </button>
             </div>
@@ -89,17 +116,12 @@ export default function AdvocateCard({ advocate, searchTerm }: AdvocateCardProps
         {advocate.specialties.length > 3 && (
           <div className="mt-4 pt-4 border-t border-gray-100">
             <details className="group">
-              <summary className="text-sm text-blue-600 cursor-pointer hover:text-blue-800">
+              <summary className="text-sm text-teal-600 cursor-pointer hover:text-teal-800">
                 View all specialties ({advocate.specialties.length})
               </summary>
-              <div className="mt-2 flex flex-wrap gap-1">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {advocate.specialties.map((specialty, index) => (
-                  <span 
-                    key={index}
-                    className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
-                  >
-                    <HighlightedText text={specialty} searchTerm={searchTerm} />
-                  </span>
+                  <SpecialtyPill key={index} specialty={specialty} color="gray" searchTerm={searchTerm} truncate={false} />
                 ))}
               </div>
             </details>
@@ -107,4 +129,4 @@ export default function AdvocateCard({ advocate, searchTerm }: AdvocateCardProps
         )}
       </div>
     );
-  };
+  }

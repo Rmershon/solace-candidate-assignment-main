@@ -41,7 +41,7 @@ export default function EnhancedSearchBar() {
           value={localSearchTerm}
           onChange={handleInputChange}
           placeholder="Search by name, specialty, location, or experience..."
-          className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+          className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-lg"
         />
         {localSearchTerm && (
           <button
@@ -65,7 +65,7 @@ export default function EnhancedSearchBar() {
               setLocalSearchTerm(suggestion);
               searchAdvocates(suggestion);
             }}
-            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200"
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-teal-100 hover:text-teal-700 transition-colors duration-200"
           >
             {suggestion}
           </button>
@@ -74,16 +74,16 @@ export default function EnhancedSearchBar() {
 
       {/* Search Tips */}
       {!searchTerm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">Search Tips</h3>
-              <div className="mt-2 text-sm text-blue-700">
+              <h3 className="text-sm font-medium text-teal-800">Search Tips</h3>
+              <div className="mt-2 text-sm text-teal-700">
                 <ul className="list-disc list-inside space-y-1">
                   <li>Search by specialty (e.g., "trauma", "anxiety", "family therapy")</li>
                   <li>Filter by location or years of experience</li>
