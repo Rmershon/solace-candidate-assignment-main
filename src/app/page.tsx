@@ -12,7 +12,6 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("fetching advocates...");
     fetch("/api/advocates")
       .then((response) => {
         if (!response.ok) {
@@ -25,7 +24,6 @@ export default function Home() {
         setFilteredAdvocates(jsonResponse.data);
       })
       .catch((error) => {
-        console.error("Error fetching advocates:", error);
         setAdvocates([]);
         setFilteredAdvocates([]);
         setError(`Error fetching advocates: ${error}`);
