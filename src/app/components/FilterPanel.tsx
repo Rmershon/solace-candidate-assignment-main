@@ -2,6 +2,7 @@
 
 import { useAdvocatesContext } from "../context/AdvocatesContext";
 import { useState, useMemo } from "react";
+import Dropdown from "./Global/Dropdown";
 
 export default function FilterPanel() {
   const { 
@@ -89,51 +90,32 @@ export default function FilterPanel() {
       {isExpanded && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Specialty Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Specialty
-            </label>
-            <select
-              value={selectedSpecialty}
-              onChange={(e) => handleSpecialtyChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-            >
-              <option value="">All Specialties</option>
-              {uniqueSpecialties.map((specialty) => (
-                <option key={specialty} value={specialty}>
-                  {specialty}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Dropdown
+            label="Filter by Specialty"
+            id="specialty-select"
+            value={selectedSpecialty}
+            onChange={(e) => handleSpecialtyChange(e.target.value)}
+            options={uniqueSpecialties}
+          />
 
           {/* City Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Location
-            </label>
-            <select
-              value={selectedCity}
-              onChange={(e) => handleCityChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-            >
-              <option value="">All Locations</option>
-              {uniqueCities.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Dropdown
+            label="Filter by Location"
+            id="city-select"
+            value={selectedCity}
+            onChange={(e) => handleCityChange(e.target.value)}
+            options={uniqueCities}
+          />
 
           {/* Experience Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="experience-select" className="block text-sm font-medium text-gray-700 mb-2">
               Years of Experience
             </label>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <input
+                  id="experience-select"
                   type="number"
                   min={experienceStats.min}
                   max={experienceStats.max}
