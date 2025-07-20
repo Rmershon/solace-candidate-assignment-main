@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
-
+import { useEffect, useState } from "react";
 import { Advocate } from "./types/advocates";
+import SearchBar from "./components/SearchBar";
+import LoadingState from "./components/LoadingState";
+import ErrorState from "./components/ErrorState";
+import NoResultsState from "./components/NoResultsState";
+import { AdvocatesTable } from "./components/AdvocatesTable";
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
@@ -12,6 +16,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setIsLoading(true);
+    setError(null);
+    
     fetch("/api/advocates")
       .then((response) => {
         if (!response.ok) {
@@ -26,123 +33,51 @@ export default function Home() {
       .catch((error) => {
         setAdvocates([]);
         setFilteredAdvocates([]);
-        setError(`Error fetching advocates: ${error}`);
+        setError(`Error fetching advocates: ${error.message}`);
       })
       .finally(() => {
         setIsLoading(false);
-      })
+      });
   }, []);
 
-  // Debounced search with case-insensitive matching
-  const debouncedSearch = useMemo(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    return (searchValue: string) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        const normalizedSearchTerm = searchValue.toLowerCase().trim();
-        
-        if (!normalizedSearchTerm) {
-          setFilteredAdvocates(advocates);
-          return;
-        }
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+  };
 
-        const filtered = advocates.filter((advocate: Advocate) => {
-          const searchFields = [
-            advocate.firstName.toLowerCase(),
-            advocate.lastName.toLowerCase(),
-            advocate.city.toLowerCase(),
-            advocate.degree.toLowerCase(),
-            advocate.yearsOfExperience.toString(),
-            ...advocate.specialties.map(s => s.toLowerCase())
-          ];
-          
-          return searchFields.some(field => field.includes(normalizedSearchTerm));
-        });
-
-        setFilteredAdvocates(filtered);
-      }, 300); // 300ms debounce delay
-    };
-  }, [advocates]);
-
-  const onChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchTerm = e.target.value;
-    setSearchTerm(newSearchTerm);
-    debouncedSearch(newSearchTerm);
-  }, [debouncedSearch]);
-
-  const clearSearch = useCallback(() => {
+  const handleClearSearch = () => {
     setSearchTerm("");
     setFilteredAdvocates(advocates);
-  }, [advocates]);
+  };
 
-  /* TODO: 
-    FUTURE - Add pagination, sorting, and filtering (e.g. search, sort, filter)
-    FUTURE - Add a loading state
-    FUTURE - Add a error state (e.g. no advocates found)
-    FUTURE - Add a success state (e.g. advocates found)
-    FUTURE - Add a no results state (e.g. no advocates found)
-  */
+  if (isLoading) {
+    return (
+      <main className="m-6">
+        <h1 className="text-2xl font-bold mb-6">Solace Advocates</h1>
+        <LoadingState />
+      </main>
+    );
+  }
 
   return (
     <main className="m-6">
-      <h1>Solace Advocates</h1>
-      <br />
-      <br />
-      <div>
-        <p>Search</p>
-        <p>
-          Searching for: <span id="search-term"></span>
-        </p>
-        <input
-          className="border border-black"
-          onChange={onChange}
-          value={searchTerm}
-        />
-        <button onClick={clearSearch}>Reset Search</button>
-      </div>
-      <br />
-      <br />
-      {error && <p className="text-red-500">{error}</p>}
-      <table>
-        <thead>
-          <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>City</th>
-            <th>Degree</th>
-            <th>Specialties</th>
-            <th>Years of Experience</th>
-            <th>Phone Number</th>
-          </tr>
-        </thead>
-        {isLoading && <p>Loading advocates...</p>}
-        {filteredAdvocates.length === 0 && !isLoading && (
-          <p>No advocates found</p>
-        )}
-        {!isLoading && filteredAdvocates.length > 0 && (
-          <tbody>
+      <h1 className="text-2xl font-bold mb-6">Solace Advocates</h1>
 
-            {filteredAdvocates.map((advocate: Advocate) => {
-              return (
-                <tr key={advocate.id}>
-                  <td>{advocate.firstName}</td>
-                  <td>{advocate.lastName}</td>
-                  <td>{advocate.city}</td>
-                  <td>{advocate.degree}</td>
-                  <td>
-                    {advocate.specialties?.map((s: string, index: number) => (
-                      <div key={index}>{s}</div>
-                    ))}
-                  </td>
-                  <td>{advocate.yearsOfExperience}</td>
-                  <td>{advocate.phoneNumber}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        )}
-      </table>
+      <SearchBar
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        onClearSearch={handleClearSearch}
+        advocates={advocates}
+        setFilteredAdvocates={setFilteredAdvocates}
+      />
+
+      {error && <ErrorState error={error} />}
+
+      {filteredAdvocates.length === 0 ? (
+        <NoResultsState searchTerm={searchTerm} />
+      ) : (
+        <AdvocatesTable advocates={filteredAdvocates} />
+      )}
+
     </main>
   );
 }

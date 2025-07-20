@@ -1,5 +1,4 @@
-export interface Advocate {
-    id: number;
+export type Advocate = {
     firstName: string;
     lastName: string;
     city: string;
