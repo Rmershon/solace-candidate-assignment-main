@@ -1,9 +1,18 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import useSWR from 'swr';
 import { Advocate } from '../types/advocates';
+
+export interface PaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
 
 export interface UseAdvocatesReturn {
   advocates: Advocate[];
-  filteredAdvocates: Advocate[];
   searchTerm: string;
   isLoading: boolean;
   error: string | null;
@@ -18,14 +27,32 @@ export interface UseAdvocatesReturn {
     hasResults: boolean;
     highlightedSearchTerm: string;
   };
+  pagination: PaginationData;
+  goToPage: (page: number) => void;
+  nextPage: () => void;
+  prevPage: () => void;
+  setPageSize: (size: number) => void;
+  activeFilters: {
+    specialty: string;
+    city: string;
+    minExperience: number;
+    maxExperience: number;
+  };
 }
 
+// SWR fetcher function
+const fetcher = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
 export const useAdvocates = (): UseAdvocatesReturn => {
-  const [advocates, setAdvocates] = useState<Advocate[]>([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [activeFilters, setActiveFilters] = useState({
     specialty: '',
     city: '',
@@ -33,32 +60,52 @@ export const useAdvocates = (): UseAdvocatesReturn => {
     maxExperience: 50,
   });
 
-  // Fetch advocates on mount
-  useEffect(() => {
-    const fetchAdvocates = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const response = await fetch('/api/advocates');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const jsonResponse = await response.json();
-        setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-        setError(`Error fetching advocates: ${errorMessage}`);
-        setAdvocates([]);
-        setFilteredAdvocates([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Build query parameters for API call
+  const queryParams = useMemo(() => {
+    const params = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: pageSize.toString(),
+    });
 
-    fetchAdvocates();
-  }, []);
+    if (searchTerm.trim()) {
+      params.append('search', searchTerm.trim());
+    }
+    if (activeFilters.specialty) {
+      params.append('specialty', activeFilters.specialty);
+    }
+    if (activeFilters.city) {
+      params.append('city', activeFilters.city);
+    }
+    if (activeFilters.minExperience > 0) {
+      params.append('minExperience', activeFilters.minExperience.toString());
+    }
+    if (activeFilters.maxExperience < 50) {
+      params.append('maxExperience', activeFilters.maxExperience.toString());
+    }
+
+    return params.toString();
+  }, [currentPage, pageSize, searchTerm, activeFilters]);
+
+  // SWR hook for data fetching
+  const { data, error, isLoading, mutate } = useSWR(
+    `/api/advocates?${queryParams}`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000,
+    }
+  );
+
+  const advocates = data?.data || [];
+  const pagination = data?.pagination || {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  };
 
   // Debounced search function
   const debouncedSearch = useMemo(() => {
@@ -67,78 +114,29 @@ export const useAdvocates = (): UseAdvocatesReturn => {
     return (searchValue: string) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        applyFilters(searchValue);
+        setSearchTerm(searchValue);
+        setCurrentPage(1); // Reset to first page on search
       }, 300);
     };
-  }, [advocates, activeFilters]);
-
-  // Apply all filters including search term
-  const applyFilters = useCallback((searchValue: string = searchTerm) => {
-    let filtered = [...advocates];
-
-    // Apply search term filter
-    if (searchValue.trim()) {
-      const normalizedSearchTerm = searchValue.toLowerCase().trim();
-      filtered = filtered.filter((advocate: Advocate) => {
-        const searchFields = [
-          advocate.firstName.toLowerCase(),
-          advocate.lastName.toLowerCase(),
-          advocate.city.toLowerCase(),
-          advocate.degree.toLowerCase(),
-          advocate.yearsOfExperience.toString(),
-          ...advocate.specialties.map(s => s.toLowerCase())
-        ];
-        
-        return searchFields.some(field => field.includes(normalizedSearchTerm));
-      });
-    }
-
-    // Apply specialty filter
-    if (activeFilters.specialty) {
-      filtered = filtered.filter(advocate => 
-        advocate.specialties.some(specialty => 
-          specialty.toLowerCase().includes(activeFilters.specialty.toLowerCase())
-        )
-      );
-    }
-
-    // Apply city filter
-    if (activeFilters.city) {
-      filtered = filtered.filter(advocate => 
-        advocate.city.toLowerCase().includes(activeFilters.city.toLowerCase())
-      );
-    }
-
-    // Apply experience filter
-    filtered = filtered.filter(advocate => 
-      advocate.yearsOfExperience >= activeFilters.minExperience &&
-      advocate.yearsOfExperience <= activeFilters.maxExperience
-    );
-
-    setFilteredAdvocates(filtered);
-  }, [advocates, searchTerm, activeFilters]);
-
-  // Re-apply filters when advocates or filters change
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+  }, []);
 
   const searchAdvocates = useCallback((term: string) => {
-    setSearchTerm(term);
     debouncedSearch(term);
   }, [debouncedSearch]);
 
   const clearSearch = useCallback(() => {
     setSearchTerm('');
-    applyFilters('');
-  }, [applyFilters]);
+    setCurrentPage(1);
+  }, []);
 
   const filterBySpecialty = useCallback((specialty: string) => {
     setActiveFilters(prev => ({ ...prev, specialty }));
+    setCurrentPage(1); // Reset to first page on filter change
   }, []);
 
   const filterByCity = useCallback((city: string) => {
     setActiveFilters(prev => ({ ...prev, city }));
+    setCurrentPage(1); // Reset to first page on filter change
   }, []);
 
   const filterByExperience = useCallback((minYears: number, maxYears: number) => {
@@ -147,6 +145,7 @@ export const useAdvocates = (): UseAdvocatesReturn => {
       minExperience: minYears, 
       maxExperience: maxYears 
     }));
+    setCurrentPage(1); // Reset to first page on filter change
   }, []);
 
   const resetFilters = useCallback(() => {
@@ -157,20 +156,44 @@ export const useAdvocates = (): UseAdvocatesReturn => {
       maxExperience: 50,
     });
     setSearchTerm('');
+    setCurrentPage(1);
+  }, []);
+
+  // Pagination controls
+  const goToPage = useCallback((page: number) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      setCurrentPage(page);
+    }
+  }, [pagination.totalPages]);
+
+  const nextPage = useCallback(() => {
+    if (pagination.hasNextPage) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [pagination.hasNextPage]);
+
+  const prevPage = useCallback(() => {
+    if (pagination.hasPrevPage) {
+      setCurrentPage(prev => prev - 1);
+    }
+  }, [pagination.hasPrevPage]);
+
+  const setPageSizeHandler = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when changing page size
   }, []);
 
   const searchResults = useMemo(() => ({
-    total: filteredAdvocates.length,
-    hasResults: filteredAdvocates.length > 0,
+    total: pagination.total,
+    hasResults: advocates.length > 0,
     highlightedSearchTerm: searchTerm.trim(),
-  }), [filteredAdvocates.length, searchTerm]);
+  }), [pagination.total, advocates.length, searchTerm]);
 
   return {
     advocates,
-    filteredAdvocates,
     searchTerm,
     isLoading,
-    error,
+    error: error?.message || null,
     searchAdvocates,
     clearSearch,
     filterBySpecialty,
@@ -178,5 +201,11 @@ export const useAdvocates = (): UseAdvocatesReturn => {
     filterByExperience,
     resetFilters,
     searchResults,
+    pagination,
+    goToPage,
+    nextPage,
+    prevPage,
+    setPageSize: setPageSizeHandler,
+    activeFilters,
   };
 }; 

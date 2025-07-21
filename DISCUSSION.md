@@ -79,3 +79,23 @@ This change focuses on improving the search and filtering experience for advocat
 Overall, these changes make the advocate search experience more robust, user-friendly, and maintainable for future development.
 
 ---
+
+# Pagination Improvements
+### Summary of Changes
+
+This change focuses on implementing a pagination for the back and front end of the service. 
+
+- **Improved Speed:** The pagination prevents the DB from needing to query *all* potential advocates at once and then needing to filter everything.
+- **Filtering on the **
+- **Better UX:** Users should have a better experience than endlessly scrolling down the advocates page.
+
+---
+
+# Future updates
+
+1. I would update the available location filter to be more dynamic, right now it's dependent on just the current locations that advocates currently are. This is, one not efficient with many results, and two is a bit frustrating to have to scroll through. I would make this a location picker. 
+2. I would update the specialties filters, "popular searches" and other fields related to specifics for the advocates to be fetched from the database, not created on the frontend.
+3. I would update the advocate cards to be clickable, and transition you to a new "profile" page for those advocates, given we had more data and information on those advocates
+4. I would also like to implement a "compare" tool that you could easily copare multiple advocates at once, instead of having to scroll between the two.
+5. Finally, I'd like to improve the loading state, as it has a bit of a flash when loading new results.
+
