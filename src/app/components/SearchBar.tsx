@@ -56,7 +56,7 @@ export default function EnhancedSearchBar() {
       </div>
 
       {/* Quick Search Suggestions */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 pb-2">
         <span className="text-sm text-gray-600 font-medium">Quick search:</span>
         {quickSearchSuggestions.map((suggestion) => (
           <button

@@ -22,7 +22,7 @@ export default function NoResultsState({ searchTerm }: NoResultsStateProps) {
   ];
 
   return (
-    <div className="text-center py-12">
+    <div className="text-center py-6">
       <div className="max-w-md mx-auto">
         {/* Icon */}
         <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
