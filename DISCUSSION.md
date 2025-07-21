@@ -86,7 +86,7 @@ Overall, these changes make the advocate search experience more robust, user-fri
 This change focuses on implementing a pagination for the back and front end of the service. 
 
 - **Improved Speed:** The pagination prevents the DB from needing to query *all* potential advocates at once and then needing to filter everything.
-- **Filtering on the **
+- **Filtering on Backend:** Use filtering through the backend, instead of filtering given results on the frontend
 - **Better UX:** Users should have a better experience than endlessly scrolling down the advocates page.
 
 ---
