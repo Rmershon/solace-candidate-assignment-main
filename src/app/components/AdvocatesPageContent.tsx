@@ -8,16 +8,21 @@ import NoResultsState from "./NoResultsState";
 import SearchBar from "./SearchBar";
 import FilterPanel from "./FilterPanel";
 import { AdvocatesGrid } from "./Advocates";
+import Pagination from "./Pagination";
 import { useAdvocatesContext } from "../context/AdvocatesContext";
 
 import SolaceLogo from "@/app/public/solace.svg";
 
 export default function AdvocatesPageContent() {
   const {
-    isLoading,
     error,
     searchResults,
-    searchTerm
+    searchTerm,
+    pagination,
+    goToPage,
+    nextPage,
+    prevPage,
+    setPageSize
   } = useAdvocatesContext();
 
   return (
@@ -71,29 +76,31 @@ export default function AdvocatesPageContent() {
         {/* Error State */}
         {error && <ErrorState error={error} />}
 
-        {isLoading && <LoadingState />}
-
         {/* Results Section */}
-        {!isLoading && !error && (
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-            {searchResults.hasResults ? (
-                <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-800">
-                    Available Advocates
-                    </h2>
-                    <div className="text-sm text-gray-500">
-                    Showing {searchResults.total} results
-                    </div>
-                </div>
-                <AdvocatesGrid />
-                </div>
-            ) : (
-                <div className="p-6">
-                <NoResultsState searchTerm={searchTerm} />
-                </div>
-            )}
-            </div>
+        {!error && (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+						<div className="p-6">
+							<div className="flex items-center justify-between mb-6">
+							<h2 className="text-2xl font-semibold text-gray-800" id="available-advocates">
+								Available Advocates
+							</h2>
+							{searchResults.hasResults && (
+								<div className="text-sm text-gray-500">
+									Showing {pagination.page} of {pagination.totalPages} pages
+								</div>
+							)}
+							</div>
+							<AdvocatesGrid />
+						</div>
+						{/* Pagination Component */}
+						<Pagination
+							pagination={pagination}
+							onPageChange={goToPage}
+							onNextPage={nextPage}
+							onPrevPage={prevPage}
+							onPageSizeChange={setPageSize}
+						/>
+          </div>
         )}
 
         {/* Help Section */}

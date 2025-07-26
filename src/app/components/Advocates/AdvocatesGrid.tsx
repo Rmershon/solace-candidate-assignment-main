@@ -1,17 +1,27 @@
 "use client";
 
 import { useAdvocatesContext } from "../../context/AdvocatesContext";
+import LoadingState from "../LoadingState";
+import NoResultsState from "../NoResultsState";
 import AdvocateCard from "./AdvocateCard";
 
 export default function AdvocatesGrid() {
-  const { filteredAdvocates, searchResults } = useAdvocatesContext();
+  const { advocates, searchResults, pagination, isLoading, searchTerm } = useAdvocatesContext();
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (!searchResults.hasResults) {
+    return <NoResultsState searchTerm={searchTerm} />;
+  }
 
   return (
     <div className="space-y-4">
       {/* View Toggle - Could add table/card view toggle here */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          Showing {searchResults.total} advocate{searchResults.total !== 1 ? 's' : ''}
+          Showing {advocates.length} of {searchResults.total} advocate{searchResults.total !== 1 ? 's' : ''}
         </p>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,20 +33,21 @@ export default function AdvocatesGrid() {
 
       {/* Advocates Grid */}
       <div className="space-y-4">
-        {filteredAdvocates.map((advocate, index) => (
+        {advocates.map((advocate, index) => (
           <AdvocateCard 
-            key={`advocate-${index}`} 
+            key={`advocate-${advocate.id || index}`} 
             advocate={advocate} 
             searchTerm={searchResults.highlightedSearchTerm}
           />
         ))}
       </div>
 
-      {/* Load More / Pagination could go here if needed */}
-      {filteredAdvocates.length > 10 && (
+      {/* Pagination info */}
+      {pagination.totalPages > 1 && (
         <div className="text-center pt-6">
           <p className="text-sm text-gray-500">
-            Showing all {filteredAdvocates.length} results
+            Page {pagination.page} of {pagination.totalPages} 
+            ({pagination.total} total results)
           </p>
         </div>
       )}
